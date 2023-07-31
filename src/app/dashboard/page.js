@@ -15,6 +15,8 @@ export default function Dashboard() {
   const { data, setData, updateData } = useUserPage();
   const [currentData, setCurrentData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [selectedLogo, setSelectedLogo] = useState(null);
+  const [selectedImages, setSelectedImages] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -31,9 +33,20 @@ export default function Dashboard() {
 
   const handleUpdate = async (model) => {
     setLoading(true);
+    const payload = model;
+    if (selectedLogo) {
+      const { data, error } = await supabase.storage
+        .from("images")
+        .upload(`${btoa(user?.id)}-${+new Date()}`, selectedLogo, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+      if (!error)
+        payload.images.logo = `https://darswxlsordzgcemxqkt.supabase.co/storage/v1/object/public/images/${data.path}`;
+    }
     const { data: res } = await supabase
       .from("pages")
-      .update(model)
+      .update(payload)
       .eq("id", data[currentData].id)
       .select()
       .single();
@@ -91,7 +104,7 @@ export default function Dashboard() {
           <InputImage
             previewLogo={data[currentData]?.images?.logo}
             previewImages={data[currentData]?.images?.slides}
-            onAvatarChange={() => 0}
+            onAvatarChange={(fileObj) => setSelectedLogo(fileObj)}
             onImagesChange={() => 0}
           />
         </div>

@@ -14,7 +14,7 @@ export default function Form({ data, onSave, isLoading }) {
   const [lokasi, setLokasi] = useState({ full: "", koordinat: "" });
   const [kategori, setKategori] = useState("");
   const [selectedProvinsi, setSelectedProvinsi] = useState(null);
-  const [images, setImages] = useState(null);
+  const [images, setImages] = useState({ icon: null, slides: null });
 
   const { user } = useUser();
 

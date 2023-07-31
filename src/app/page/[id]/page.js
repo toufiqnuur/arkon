@@ -169,7 +169,13 @@ export default function DetailPage({ params }) {
         </div>
         <div className="text-sm md:col-span-5 md:text-base">
           <div className="flex space-x-4">
-            <div className="h-16 w-16 shrink-0 rounded-full bg-slate-200"></div>
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-slate-200">
+              <img
+                src={pageData?.images?.logo}
+                className="h-full object-cover"
+                alt=""
+              />
+            </div>
             <div>
               <h2 className="card-title">{pageData?.name}</h2>
               <p className="mt-1">{pageData?.short_desc}</p>
@@ -309,7 +315,7 @@ export default function DetailPage({ params }) {
                 </div>
               ))}
               <div className="text-zinc-500">
-                {!pageComment && "Belum ada ulasan"}
+                {!pageComment?.length && "Belum ada ulasan"}
               </div>
             </div>
           </div>
