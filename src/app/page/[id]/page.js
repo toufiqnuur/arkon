@@ -14,6 +14,8 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import clsx from "clsx";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 
 const Maps = dynamic(() => import("~/components/Maps"), { ssr: false });
 
@@ -27,28 +29,46 @@ export default function DetailPage({ params }) {
 
   const [fetchingData, setFetchingData] = useState(true);
   const [isPostComment, setIsPostComment] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
   const { data, updateData } = useDataStore();
   const { user } = useUser();
 
   useEffect(() => {
-    let pageId = atob(params.id);
+    let pageId;
+    try {
+      pageId = atob(params.id);
+    } catch (error) {
+      setNotFound(true);
+      setFetchingData(false);
+      return;
+    }
     pageId = pageId.slice(5, pageId.length);
+    if (isNaN(pageId)) {
+      setNotFound(true);
+      setFetchingData(false);
+      return;
+    }
     const isFound = data && data.filter((item) => item.id == pageId);
     if (isFound.length) {
       setPageData(isFound[0]);
     } else {
       (async () => {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("pages")
           .select()
           .eq("id", pageId)
           .single();
-        setPageData(data);
-        updateData(data);
+        if (error) {
+          setNotFound(true);
+        } else {
+          setPageData(data);
+          updateData(data);
+        }
       })();
     }
     setFetchingData(false);
+    console.log(notFound);
     (async () => {
       const { data } = await supabase
         .from("comments")
@@ -91,6 +111,28 @@ export default function DetailPage({ params }) {
   if (fetchingData) {
     return <span className="loading loading-dots loading-lg"></span>;
   }
+
+  if (notFound) {
+    return (
+      <div className="md:flex md:items-center">
+        <Image
+          src="/not-found.jpeg"
+          width={400}
+          height={400}
+          alt="Ilustrasi halaman tidak ditemukan"
+        />
+        <div className="mt-8 md:ml-8 md:mt-0">
+          <h3 className="text-2xl font-semibold">
+            Yah, halaman yang kamu cari tidak ditemukan
+          </h3>
+          <Link className="btn btn-primary btn-sm mt-4 normal-case" href="/">
+            Kembali ke beranda
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="grid grid-cols-1 gap-y-12 md:grid-cols-8 md:gap-x-8 md:gap-y-10">

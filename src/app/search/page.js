@@ -37,35 +37,52 @@ export default function SearchPage() {
   const keyword = searchParams.get("q");
   const lokasiParams = searchParams.get("lokasi");
   const supabase = createClientComponentClient();
-  const [result, setResult] = useState();
+  const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
     (async () => {
-      setLoading(true);
       if (lokasiParams) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("pages")
           .select()
           .textSearch("name", `${keyword}`, {
             type: "websearch",
           })
           .eq("provinsi", lokasiParams);
-        setResult(data);
+        if (!error) {
+          setResult(data);
+        } else {
+          setNotFound(true);
+        }
       } else {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("pages")
           .select()
           .textSearch("name", `${keyword}`, {
             type: "websearch",
           });
-        setResult(data);
+        if (!error) {
+          setResult(data);
+        } else {
+          setNotFound(true);
+        }
       }
-      setLoading(false);
     })();
+    setLoading(false);
   }, [keyword, lokasiParams]);
 
   if (!keyword) {
+    return <SearchNotFound />;
+  }
+
+  if (loading) {
+    return <span className="loading loading-dots loading-lg"></span>;
+  }
+
+  if (!result?.length) {
     return <SearchNotFound />;
   }
 
@@ -74,24 +91,23 @@ export default function SearchPage() {
       <h3 className="text-xl font-semibold">
         Menampilkan hasil untuk "{keyword}"
       </h3>
-      {result ? (
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
-          {result.map((data) => (
+      <div className="mt-4 grid gap-4 md:grid-cols-3">
+        {result?.map((data) => (
+          <Link
+            href={`/page/${btoa("page-" + data.id)}`}
+            key={data.id}
+            className="hover:contrast-50 active:scale-95"
+          >
             <CardItem
-              key={data.id}
               name={data.name}
               poster={data.images?.slides[0]}
               provinsi={data.provinsi}
               tarif={data.tarif}
               kategori={data.kategori}
             />
-          ))}
-        </div>
-      ) : loading ? (
-        <span className="loading loading-dots loading-lg"></span>
-      ) : (
-        <SearchNotFound />
-      )}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
