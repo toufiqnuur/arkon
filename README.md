@@ -32,3 +32,10 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+
+https://www.flaticon.com/search?type=icon&search-group=all&word=horse&license=&color=&shape=&current_section=&author_id=&pack_id=&family_id=&style_id=&type=
+https://www.flaticon.com/search?type=icon&word=dance
+https://www.flaticon.com/packs/indonesia-19
+<a href="https://www.flaticon.com/free-icons/horse" title="horse icons">Horse icons created by Freepik - Flaticon</a>
+<a href="https://www.flaticon.com/free-icons/enjoy" title="enjoy icons">Enjoy icons created by Mayor Icons - Flaticon</a>
+<a href="https://www.flaticon.com/free-icons/wayang" title="wayang icons">Wayang icons created by bearicons - Flaticon</a>
