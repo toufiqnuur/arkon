@@ -267,7 +267,7 @@ export default function DetailPage({ params }) {
                 </div>
               ))}
               <div className="text-zinc-500">
-                {pageComment && "Belum ada ulasan"}
+                {!pageComment && "Belum ada ulasan"}
               </div>
             </div>
           </div>
