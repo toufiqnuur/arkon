@@ -53,8 +53,8 @@ export default function Dashboard() {
         </ul>
       </div>
       <h1 className="text-2xl font-bold">Dashboard</h1>
-      <div className="mt-4 flex items-end gap-4">
-        <div className="form-control w-full max-w-xs">
+      <div className="mt-4 flex flex-wrap items-end gap-4">
+        <div className="form-control w-full md:max-w-xs">
           <label className="label">
             <span className="label-text font-semibold">Pilih halaman</span>
           </label>
