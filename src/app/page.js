@@ -8,6 +8,8 @@ import Hero from "~/components/home/Hero";
 import { useDataStore } from "~/store";
 import { DataInit } from "~/store/StoreInit";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const supabase = createServerComponentClient({ cookies: cookies });
   const { data } = await supabase

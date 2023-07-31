@@ -7,6 +7,8 @@ import { UserInit } from "~/store/StoreInit";
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Arkon",
   description: "Temukan dan terhubung dengan seniman lokal yang berbakat.",
