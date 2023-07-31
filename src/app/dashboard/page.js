@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Form from "~/components/dashboard/Form";
+import InputImage from "~/components/dashboard/InputImage";
 import { useUser, useUserPage } from "~/store";
 
 export default function Dashboard() {
@@ -81,11 +82,19 @@ export default function Dashboard() {
       </div>
 
       {data ? (
-        <Form
-          data={data[currentData]}
-          onSave={(model) => handleUpdate(model)}
-          isLoading={loading}
-        />
+        <div className="flex flex-col-reverse gap-4 md:flex-row">
+          <Form
+            data={data[currentData]}
+            onSave={(model) => handleUpdate(model)}
+            isLoading={loading}
+          />
+          <InputImage
+            previewLogo={data[currentData]?.images?.logo}
+            previewImages={data[currentData]?.images?.slides}
+            onAvatarChange={() => 0}
+            onImagesChange={() => 0}
+          />
+        </div>
       ) : (
         <div className="hidden py-16 text-center">
           <Image

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Form from "~/components/dashboard/Form";
+import InputImage from "~/components/dashboard/InputImage";
 import { useUserPage } from "~/store";
 
 export default function AddNew() {
@@ -37,7 +38,10 @@ export default function AddNew() {
           </li>
         </ul>
       </div>
-      <Form onSave={(model) => handleSave(model)} isLoading={loading} />
+      <div className="flex flex-col-reverse gap-4 md:flex-row">
+        <Form onSave={(model) => handleSave(model)} isLoading={loading} />
+        <InputImage onAvatarChange={() => 0} onImagesChange={() => 0} />
+      </div>
     </>
   );
 }

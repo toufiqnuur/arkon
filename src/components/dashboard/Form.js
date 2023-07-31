@@ -50,7 +50,10 @@ export default function Form({ data, onSave, isLoading }) {
   };
 
   return (
-    <form className="mt-6 max-w-2xl space-y-2" onSubmit={saveData}>
+    <form
+      className="mt-2 w-full max-w-2xl space-y-2 md:mt-6 "
+      onSubmit={saveData}
+    >
       <div className="form-control w-full">
         <label className="label">
           <span className="label-text">Nama</span>
@@ -239,13 +242,6 @@ export default function Form({ data, onSave, isLoading }) {
       <button type="submit" className="btn btn-primary" disabled={isLoading}>
         Simpan
       </button>
-
-      {/* <input
-        type="file"
-        className="file-input file-input-bordered file-input-primary w-full "
-        accept="image/*"
-        multiple
-      /> */}
     </form>
   );
 }
