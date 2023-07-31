@@ -11,8 +11,9 @@ import { useUser, useUserPage } from "~/store";
 export default function Dashboard() {
   const supabase = createClientComponentClient();
   const { user } = useUser();
-  const { data, setData } = useUserPage();
+  const { data, setData, updateData } = useUserPage();
   const [currentData, setCurrentData] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -26,6 +27,21 @@ export default function Dashboard() {
       }
     })();
   }, []);
+
+  const handleUpdate = async (model) => {
+    setLoading(true);
+    const { data: res } = await supabase
+      .from("pages")
+      .update(model)
+      .eq("id", data[currentData].id)
+      .select()
+      .single();
+    let index = data.findIndex((item) => item.id == data[currentData].id);
+    let newData = data;
+    data[index] = res;
+    setData(newData);
+    setLoading(false);
+  };
 
   return (
     <>
@@ -65,7 +81,11 @@ export default function Dashboard() {
       </div>
 
       {data ? (
-        <Form data={data[currentData]} />
+        <Form
+          data={data[currentData]}
+          onSave={(model) => handleUpdate(model)}
+          isLoading={loading}
+        />
       ) : (
         <div className="hidden py-16 text-center">
           <Image

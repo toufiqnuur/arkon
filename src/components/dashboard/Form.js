@@ -14,6 +14,7 @@ export default function Form({ data, onSave, isLoading }) {
   const [lokasi, setLokasi] = useState({ full: "", koordinat: "" });
   const [kategori, setKategori] = useState("");
   const [selectedProvinsi, setSelectedProvinsi] = useState(null);
+  const [images, setImages] = useState(null);
 
   const { user } = useUser();
 
@@ -27,6 +28,7 @@ export default function Form({ data, onSave, isLoading }) {
       setKategori(data.kategori.join(","));
       setLokasi(data.lokasi);
       setSelectedProvinsi(data.provinsi);
+      setImages(data.images);
     }
   }, [data]);
 
@@ -42,7 +44,7 @@ export default function Form({ data, onSave, isLoading }) {
       lokasi: lokasi,
       provinsi: selectedProvinsi,
       kategori: kategori.split(","),
-      images: null,
+      images: images,
     };
     onSave(model);
   };
