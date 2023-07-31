@@ -44,6 +44,24 @@ export default function Dashboard() {
       if (!error)
         payload.images.logo = `https://darswxlsordzgcemxqkt.supabase.co/storage/v1/object/public/images/${data.path}`;
     }
+    if (selectedImages) {
+      const urls = [];
+      for (let i = 0; i < selectedImages.length; i++) {
+        const file = selectedImages[i];
+        const { data, error } = await supabase.storage
+          .from("images")
+          .upload(`${btoa(payload?.id)}-${+new Date()}`, file, {
+            cacheControl: "3600",
+            upsert: false,
+          });
+        if (!error) {
+          urls.push(
+            `https://darswxlsordzgcemxqkt.supabase.co/storage/v1/object/public/images/${data.path}`,
+          );
+        }
+      }
+      if (urls.length) payload.images.slides = urls;
+    }
     const { data: res } = await supabase
       .from("pages")
       .update(payload)
@@ -105,7 +123,7 @@ export default function Dashboard() {
             previewLogo={data[currentData]?.images?.logo}
             previewImages={data[currentData]?.images?.slides}
             onAvatarChange={(fileObj) => setSelectedLogo(fileObj)}
-            onImagesChange={() => 0}
+            onImagesChange={(fileObj) => setSelectedImages(fileObj)}
           />
         </div>
       ) : (

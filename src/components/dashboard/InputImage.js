@@ -23,20 +23,11 @@ export default function InputImage({
 
   const slidesChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      if (previewImages) {
-        setCurrtImages([
-          ...previewImages,
-          ...Object.entries(e.target.files).map((obj) =>
-            URL.createObjectURL(obj[1]),
-          ),
-        ]);
-      } else {
-        setCurrtImages(
-          Object.entries(e.target.files).map((obj) =>
-            URL.createObjectURL(obj[1]),
-          ),
-        );
-      }
+      setCurrtImages(
+        Object.entries(e.target.files).map((obj) =>
+          URL.createObjectURL(obj[1]),
+        ),
+      );
 
       onImagesChange(e.target.files);
     }
