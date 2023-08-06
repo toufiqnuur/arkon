@@ -25,8 +25,8 @@ export default function HeaderMenu() {
   const { user, setUser } = useUser();
   const path = usePathname();
 
-  const logout = () => {
-    supabase.auth.signOut();
+  const logout = async() => {
+    await supabase.auth.signOut();
     setUser(null);
   };
 
