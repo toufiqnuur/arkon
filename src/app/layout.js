@@ -1,6 +1,5 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
-import { cookies } from "next/headers";
 import { useUser } from "~/store";
 import { UserInit } from "~/store/StoreInit";
 import { createClient } from "~/lib/supabase/server";
@@ -15,11 +14,11 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-  const supabase = createClient({ cookies: cookies });
+  const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  useUser.setState({ user: session?.user });
+    data: { user },
+  } = await supabase.auth.getUser();
+  useUser.setState({ user });
 
   return (
     <html lang="en" data-theme="light">
@@ -27,7 +26,7 @@ export default async function RootLayout({ children }) {
         <meta name="dicoding:email" content="taufik2017yk@gmail.com" />
       </head>
       <body className={inter.className}>
-        <UserInit data={{ user: session?.user }} />
+        <UserInit data={{ user }} />
         {children}
       </body>
     </html>

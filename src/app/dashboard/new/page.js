@@ -1,6 +1,6 @@
 "use client";
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "~/lib/supabase/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -10,7 +10,7 @@ import { useUser, useUserPage } from "~/store";
 
 export default function AddNew() {
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const { updateData } = useUserPage();
   const [loading, setLoading] = useState(false);
   const [selectedLogo, setSelectedLogo] = useState(null);

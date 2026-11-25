@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu } from "@headlessui/react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "~/lib/supabase/client";
 import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -21,7 +21,7 @@ const BtnLink = ({ className, href, children }) => {
 };
 
 export default function HeaderMenu() {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const { user, setUser } = useUser();
   const path = usePathname();
 

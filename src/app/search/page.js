@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "~/lib/supabase/client";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -36,7 +36,7 @@ export default function SearchPage() {
   const searchParams = useSearchParams();
   const keyword = searchParams.get("q");
   const lokasiParams = searchParams.get("lokasi");
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);

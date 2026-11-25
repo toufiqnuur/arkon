@@ -1,5 +1,3 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
 import Link from "next/link";
 import CardItem from "~/components/CardItem";
 import Footer from "~/components/Footer";
@@ -7,11 +5,12 @@ import Header from "~/components/home/Header";
 import Hero from "~/components/home/Hero";
 import { useDataStore } from "~/store";
 import { DataInit } from "~/store/StoreInit";
+import { createClient } from "~/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const supabase = createServerComponentClient({ cookies: cookies });
+  const supabase = await createClient();
   const { data } = await supabase
     .from("pages")
     .select()

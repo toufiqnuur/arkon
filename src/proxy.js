@@ -1,20 +1,66 @@
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
-import { createClient } from "./lib/supabase/server";
 
-export async function proxy(req) {
-  const res = NextResponse.next();
-  const supabase = createClient({ req, res });
+function copyResponseState(source, target) {
+  for (const cookie of source.cookies.getAll()) {
+    target.cookies.set(cookie);
+  }
+
+  for (const header of ["cache-control", "expires", "pragma"]) {
+    const value = source.headers.get(header);
+    if (value) target.headers.set(header, value);
+  }
+
+  return target;
+}
+
+export async function proxy(request) {
+  let response = NextResponse.next({ request });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet, headers) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          );
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options),
+          );
+
+          if (headers) {
+            Object.entries(headers).forEach(([key, value]) => {
+              if (value) response.headers.set(key, value);
+            });
+          }
+        },
+      },
+    },
+  );
+
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (req.nextUrl.pathname.startsWith("/dashboard") && !session) {
-    return NextResponse.redirect(new URL("/auth/signin", req.url));
+  if (request.nextUrl.pathname.startsWith("/dashboard") && !user) {
+    return copyResponseState(
+      response,
+      NextResponse.redirect(new URL("/auth/signin", request.url)),
+    );
   }
 
-  if (req.nextUrl.pathname.startsWith("/auth") && session) {
-    return NextResponse.redirect(new URL("/", req.url));
+  if (request.nextUrl.pathname.startsWith("/auth") && user) {
+    return copyResponseState(
+      response,
+      NextResponse.redirect(new URL("/", request.url)),
+    );
   }
 
-  return res;
+  return response;
 }

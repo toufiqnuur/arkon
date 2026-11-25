@@ -10,7 +10,7 @@ import "swiper/css/pagination";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useDataStore, useUser } from "~/store";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "~/lib/supabase/client";
 import clsx from "clsx";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
@@ -21,7 +21,7 @@ const Maps = dynamic(() => import("~/components/Maps"), { ssr: false });
 
 export default function DetailPage({ params }) {
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   const [pageData, setPageData] = useState(null);
   const [pageComment, setPageComment] = useState(null);

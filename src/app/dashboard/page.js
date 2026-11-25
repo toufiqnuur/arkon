@@ -1,6 +1,6 @@
 "use client";
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "~/lib/supabase/client";
 import clsx from "clsx";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,7 +10,7 @@ import InputImage from "~/components/dashboard/InputImage";
 import { useUser, useUserPage } from "~/store";
 
 export default function Dashboard() {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const { user } = useUser();
   const { data, setData, updateData } = useUserPage();
   const [currentData, setCurrentData] = useState(null);
