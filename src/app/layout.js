@@ -1,9 +1,9 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import { useUser } from "~/store";
 import { UserInit } from "~/store/StoreInit";
+import { createClient } from "~/lib/supabase/server";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,7 +15,7 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-  const supabase = createServerComponentClient({ cookies: cookies });
+  const supabase = createClient({ cookies: cookies });
   const {
     data: { session },
   } = await supabase.auth.getSession();
