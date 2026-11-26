@@ -23,12 +23,12 @@ export default async function Home() {
       <DataInit data={data} />
       <Header />
       <Hero />
-      <div className="mx-auto mb-10 mt-32 max-w-screen-xl px-4 md:mt-20">
+      <div className="mx-auto mt-32 mb-10 max-w-screen-xl px-4 md:mt-20">
         <h3 className="text-xl font-bold">Baru bergabung</h3>
         <div className="mt-4 grid gap-4 md:grid-cols-3">
           {data.map((item) => (
             <Link
-              href={`/page/${btoa("page-" + item.id)}`}
+              href={`/page/${item.id}`}
               key={item.id}
               className="hover:contrast-50 active:scale-95"
             >

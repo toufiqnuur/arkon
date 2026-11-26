@@ -13,14 +13,16 @@ import { useDataStore, useUser } from "~/store";
 import { createClient } from "~/lib/supabase/client";
 import clsx from "clsx";
 import dayjs from "dayjs";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 
 const Maps = dynamic(() => import("~/components/Maps"), { ssr: false });
 
-export default function DetailPage({ params }) {
+export default function DetailPage() {
   const router = useRouter();
+  const params = useParams();
+  const pageId = params?.id;
   const supabase = createClient();
 
   const [pageData, setPageData] = useState(null);
@@ -31,57 +33,66 @@ export default function DetailPage({ params }) {
   const [isPostComment, setIsPostComment] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
-  const { data, updateData } = useDataStore();
+  const { updateData } = useDataStore();
   const { user } = useUser();
 
   useEffect(() => {
-    let pageId;
-    try {
-      pageId = atob(params.id);
-    } catch (error) {
+    if (!pageId) {
       setNotFound(true);
       setFetchingData(false);
       return;
     }
-    pageId = pageId.slice(5, pageId.length);
-    if (isNaN(pageId)) {
-      setNotFound(true);
-      setFetchingData(false);
-      return;
-    }
-    const isFound = data && data.filter((item) => item.id == pageId);
-    if (isFound.length) {
-      setPageData(isFound[0]);
-    } else {
-      (async () => {
-        const { data, error } = await supabase
+
+    let active = true;
+    setFetchingData(true);
+    setNotFound(false);
+
+    (async () => {
+      const cached = useDataStore
+        .getState()
+        .data?.find((item) => String(item.id) === String(pageId));
+
+      if (cached) {
+        setPageData(cached);
+      } else {
+        const { data: page, error } = await supabase
           .from("pages")
           .select()
           .eq("id", pageId)
           .single();
+
+        if (!active) return;
+
         if (error) {
           setNotFound(true);
-        } else {
-          setPageData(data);
-          updateData(data);
+          setFetchingData(false);
+          return;
         }
-      })();
-    }
-    setFetchingData(false);
-    console.log(notFound);
-    (async () => {
-      const { data } = await supabase
+
+        setPageData(page);
+        updateData(page);
+      }
+
+      const { data: comments } = await supabase
         .from("comments")
         .select(`*, profiles(*)`)
         .eq("page_id", pageId)
         .order("id", { ascending: false });
-      setPageComment(data);
+
+      if (!active) return;
+
+      setPageComment(comments ?? []);
+      setFetchingData(false);
     })();
-  }, [params]);
+
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageId]);
 
   const handleKirimKomentar = () => {
-    let pageId = atob(params.id);
-    pageId = pageId.slice(5, pageId.length);
+    if (!pageId) return;
     if (!user) {
       router.push("/auth/signin");
     } else {
@@ -273,7 +284,7 @@ export default function DetailPage({ params }) {
               >
                 {isPostComment ? (
                   <>
-                    <span class="loading loading-spinner"></span>
+                    <span className="loading loading-spinner"></span>
                     loading
                   </>
                 ) : user ? (

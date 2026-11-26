@@ -94,7 +94,7 @@ export default function SearchPage() {
       <div className="mt-4 grid gap-4 md:grid-cols-3">
         {result?.map((data) => (
           <Link
-            href={`/page/${btoa("page-" + data.id)}`}
+            href={`/page/${data.id}`}
             key={data.id}
             className="hover:contrast-50 active:scale-95"
           >
