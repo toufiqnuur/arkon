@@ -30,6 +30,7 @@ export default function DetailPage() {
   const [pageData, setPageData] = useState(null);
   const [pageComment, setPageComment] = useState(null);
   const [commentInput, setCommentInput] = useState("");
+  const [commentError, setCommentError] = useState("");
 
   const [fetchingData, setFetchingData] = useState(true);
   const [isPostComment, setIsPostComment] = useState(false);
@@ -93,32 +94,41 @@ export default function DetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageId]);
 
-  const handleKirimKomentar = () => {
+  const handleKirimKomentar = async () => {
     if (!pageId) return;
+
     if (!user) {
       router.push("/auth/signin");
-    } else {
-      setIsPostComment(true);
-      (async () => {
-        const { data } = await supabase
-          .from("comments")
-          .insert({
-            user_id: user.id,
-            page_id: pageId,
-            body: commentInput,
-          })
-          .select()
-          .single();
-        pageComment
-          ? setPageComment((prev) => [
-              { ...data, profiles: user?.user_metadata },
-              ...prev,
-            ])
-          : setPageComment([{ ...data, profiles: user?.user_metadata }]);
-      })();
-      setCommentInput("");
-      setIsPostComment(false);
+      return;
     }
+
+    const body = commentInput.trim();
+    if (!body) return;
+
+    setIsPostComment(true);
+    setCommentError("");
+
+    const { data, error } = await supabase
+      .from("comments")
+      .insert({
+        user_id: user.id,
+        page_id: pageId,
+        body,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      setCommentError(error.message);
+    } else {
+      setPageComment((prev) => [
+        { ...data, profiles: user?.user_metadata },
+        ...(prev ?? []),
+      ]);
+      setCommentInput("");
+    }
+
+    setIsPostComment(false);
   };
 
   if (fetchingData) {
@@ -275,14 +285,19 @@ export default function DetailPage() {
                 className="textarea textarea-bordered mt-4 w-full"
                 placeholder="Beri ulasan"
                 value={commentInput}
-                onChange={(e) => setCommentInput(e.target.value)}
+                onChange={(e) => {
+                  setCommentInput(e.target.value);
+                  setCommentError("");
+                }}
                 rows={4}
                 disabled={!user}
               ></textarea>
               <button
                 className="btn btn-primary mt-2"
                 onClick={handleKirimKomentar}
-                disabled={isPostComment}
+                disabled={
+                  isPostComment || (Boolean(user) && !commentInput.trim())
+                }
               >
                 {isPostComment ? (
                   <>
@@ -295,6 +310,11 @@ export default function DetailPage() {
                   "Masuk untuk komentar"
                 )}
               </button>
+              {commentError && (
+                <div role="alert" className="alert alert-error mt-2 text-sm">
+                  {commentError}
+                </div>
+              )}
             </div>
 
             <div className="mt-8 space-y-2">
