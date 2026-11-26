@@ -37,12 +37,12 @@ export default function SignUp() {
   return (
     <div className="mx-auto max-w-lg px-4">
       <form
-        className="mt-10 border px-4 pb-8 pt-6 shadow-lg"
+        className="mt-10 rounded-lg px-4 pt-6 pb-8 shadow-lg"
         onSubmit={handleSignUp}
       >
         <div className="text-center">
           <Link href="/" className="btn btn-ghost">
-            <Logo type="full" className="mx-auto text-primary" />
+            <Logo type="full" className="text-primary mx-auto" />
           </Link>
         </div>
 
@@ -98,7 +98,7 @@ export default function SignUp() {
 
         <div className="mt-6">
           Sudah punya akun?{" "}
-          <Link href="/auth/signin" className="font-semibold text-primary">
+          <Link href="/auth/signin" className="text-primary font-semibold">
             Masuk
           </Link>
         </div>
