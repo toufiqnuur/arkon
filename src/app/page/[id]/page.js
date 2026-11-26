@@ -156,34 +156,41 @@ export default function DetailPage() {
     );
   }
 
+  const logoUrl = resolveImageUrl(pageData?.images?.logo);
+  const slides = (pageData?.images?.slides ?? []).filter(Boolean);
+
   return (
     <>
       <div className="grid grid-cols-1 gap-y-12 md:grid-cols-8 md:gap-x-8 md:gap-y-10">
         <div className="md:col-span-3">
-          <Swiper
-            modules={[Autoplay, Navigation, Pagination, A11y]}
-            navigation
-            loop
-            autoplay={{
-              delay: 2500,
-              disableOnInteraction: false,
-            }}
-            pagination={{ clickable: true }}
-            scrollbar={{ draggable: true }}
-            slidesPerView={1}
-            className="aspect-[4/3] rounded"
-          >
-            {pageData?.images?.slides?.map((url, idx) => (
-              <SwiperSlide className="aspect-[4/3] bg-slate-300" key={idx}>
-                <img
-                  src={resolveImageUrl(url)}
-                  className="h-full object-cover"
-                  loading="lazy"
-                  alt=""
-                />
-              </SwiperSlide>
-            ))}
-          </Swiper>
+          {slides.length ? (
+            <Swiper
+              modules={[Autoplay, Navigation, Pagination, A11y]}
+              navigation
+              loop
+              autoplay={{
+                delay: 2500,
+                disableOnInteraction: false,
+              }}
+              pagination={{ clickable: true }}
+              scrollbar={{ draggable: true }}
+              slidesPerView={1}
+              className="aspect-[4/3] rounded"
+            >
+              {slides.map((url, idx) => (
+                <SwiperSlide className="aspect-[4/3] bg-slate-300" key={idx}>
+                  <img
+                    src={resolveImageUrl(url)}
+                    className="h-full object-cover"
+                    loading="lazy"
+                    alt=""
+                  />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          ) : (
+            <div className="aspect-[4/3] rounded bg-slate-200"></div>
+          )}
           {pageData?.lokasi?.koordinat && (
             <div className="mt-8 hidden aspect-square overflow-hidden rounded md:block">
               <Maps position={pageData?.lokasi?.koordinat?.split(",")} />
@@ -193,11 +200,13 @@ export default function DetailPage() {
         <div className="text-sm md:col-span-5 md:text-base">
           <div className="flex space-x-4">
             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-slate-200">
-              <img
-                src={resolveImageUrl(pageData?.images?.logo)}
-                className="h-full object-cover"
-                alt=""
-              />
+              {logoUrl && (
+                <img
+                  src={logoUrl}
+                  className="h-full object-cover"
+                  alt=""
+                />
+              )}
             </div>
             <div>
               <h2 className="card-title">{pageData?.name}</h2>
