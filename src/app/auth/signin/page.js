@@ -26,12 +26,16 @@ export default function SignIn() {
       data: { user },
       error,
     } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim(),
       password,
     });
 
     if (error) {
-      toast.error(error.message);
+      if (error.message.toLowerCase().includes("invalid login credentials")) {
+        toast.error("Email atau kata sandi salah.");
+      } else {
+        toast.error(error.message);
+      }
       setLoading(false);
       return;
     }
@@ -64,6 +68,8 @@ export default function SignIn() {
             className="input input-bordered w-full"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            required
           />
         </div>
 
@@ -77,6 +83,8 @@ export default function SignIn() {
             className="input input-bordered w-full"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            required
           />
         </div>
 
@@ -94,7 +102,7 @@ export default function SignIn() {
           className="btn btn-primary mt-6 w-full"
           disabled={loading}
         >
-          Masuk
+          {loading ? "Masuk..." : "Masuk"}
         </button>
 
         <div className="mt-6">

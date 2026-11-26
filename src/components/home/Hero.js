@@ -4,6 +4,7 @@ import { createClient } from "~/lib/supabase/client";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "~/store/toast";
 
 export default function Hero() {
   const router = useRouter();
@@ -28,7 +29,7 @@ export default function Hero() {
       }
       router.push(`/search?${query}`);
     } else {
-      alert("Kata kunci tidak boleh kosong");
+      toast.error("Kata kunci tidak boleh kosong.");
     }
   };
 
