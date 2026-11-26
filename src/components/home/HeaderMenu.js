@@ -4,13 +4,14 @@ import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { createClient } from "~/lib/supabase/client";
 import clsx from "clsx";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   RiUserAddLine,
   RiUserSharedLine,
   RiUserUnfollowLine,
 } from "react-icons/ri";
 import { useUser } from "~/store/UserProvider";
+import { toast } from "~/store/toast";
 
 const BtnLink = ({ className, href, children }) => {
   return (
@@ -24,10 +25,13 @@ export default function HeaderMenu() {
   const supabase = createClient();
   const { user, setUser } = useUser();
   const path = usePathname();
+  const router = useRouter();
 
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    toast.success("Anda telah keluar.");
+    router.replace("/");
   };
 
   if (!user && path === "/") {
