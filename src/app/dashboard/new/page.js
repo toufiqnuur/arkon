@@ -10,19 +10,18 @@ import { useState } from "react";
 import Form from "~/components/dashboard/FormRHF";
 import InputImage from "~/components/dashboard/InputImage";
 import { useUserPage } from "~/store";
+import { toast } from "~/store/toast";
 
 export default function AddNew() {
   const router = useRouter();
   const supabase = createClient();
   const { updateData } = useUserPage();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [selectedLogo, setSelectedLogo] = useState(null);
   const [selectedImages, setSelectedImages] = useState(null);
 
   const handleSave = async (model) => {
     setLoading(true);
-    setError("");
 
     try {
       const payload = {
@@ -49,9 +48,10 @@ export default function AddNew() {
       if (insertError) throw insertError;
 
       updateData(data);
+      toast.success("Halaman berhasil dibuat.");
       router.push("/dashboard");
     } catch (err) {
-      setError(err?.message ?? "Gagal menyimpan halaman.");
+      toast.error(err?.message ?? "Gagal menyimpan halaman.");
     } finally {
       setLoading(false);
     }
@@ -69,11 +69,6 @@ export default function AddNew() {
           </li>
         </ul>
       </div>
-      {error && (
-        <div role="alert" className="alert alert-error mb-4 text-sm">
-          {error}
-        </div>
-      )}
       <div className="flex flex-col-reverse gap-4 md:flex-row">
         <Form onSave={(model) => handleSave(model)} isLoading={loading} />
         <InputImage

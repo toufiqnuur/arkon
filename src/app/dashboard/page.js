@@ -12,6 +12,7 @@ import Form from "~/components/dashboard/FormRHF";
 import InputImage from "~/components/dashboard/InputImage";
 import { useUser } from "~/store/UserProvider";
 import { useUserPage } from "~/store";
+import { toast } from "~/store/toast";
 
 export default function Dashboard() {
   const supabase = createClient();
@@ -19,9 +20,7 @@ export default function Dashboard() {
   const { data, setData } = useUserPage();
   const [currentData, setCurrentData] = useState(null);
   const [fetching, setFetching] = useState(true);
-  const [fetchError, setFetchError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [selectedLogo, setSelectedLogo] = useState(null);
   const [selectedImages, setSelectedImages] = useState(null);
 
@@ -33,7 +32,6 @@ export default function Dashboard() {
 
     let active = true;
     setFetching(true);
-    setFetchError("");
     setData(null);
     setCurrentData(null);
 
@@ -46,7 +44,7 @@ export default function Dashboard() {
       if (!active) return;
 
       if (fetchError) {
-        setFetchError(fetchError.message);
+        toast.error(`Gagal memuat halaman: ${fetchError.message}`);
       } else {
         setData(pages);
         setCurrentData(pages.length ? 0 : null);
@@ -66,7 +64,6 @@ export default function Dashboard() {
     if (!current) return;
 
     setLoading(true);
-    setError("");
 
     try {
       const payload = {
@@ -96,8 +93,9 @@ export default function Dashboard() {
       setData(data.map((item) => (item.id === res.id ? res : item)));
       setSelectedLogo(null);
       setSelectedImages(null);
+      toast.success("Halaman berhasil diperbarui.");
     } catch (err) {
-      setError(err?.message ?? "Gagal menyimpan halaman.");
+      toast.error(err?.message ?? "Gagal menyimpan halaman.");
     } finally {
       setLoading(false);
     }
@@ -113,16 +111,6 @@ export default function Dashboard() {
         </ul>
       </div>
       <h1 className="text-2xl font-bold">Dashboard</h1>
-      {error && (
-        <div role="alert" className="alert alert-error mt-4 text-sm">
-          {error}
-        </div>
-      )}
-      {fetchError && (
-        <div role="alert" className="alert alert-error mt-4 text-sm">
-          Gagal memuat halaman: {fetchError}
-        </div>
-      )}
       <div className="mt-4 flex flex-wrap items-end gap-4">
         <div className="form-control w-full md:max-w-xs">
           <label className="label">

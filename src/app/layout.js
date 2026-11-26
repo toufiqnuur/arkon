@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { createClient } from "~/lib/supabase/server";
+import Toaster from "~/components/Toaster";
 import { UserProvider } from "~/store/UserProvider";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -24,7 +25,10 @@ export default async function RootLayout({ children }) {
         <meta name="dicoding:email" content="taufik2017yk@gmail.com" />
       </head>
       <body className={inter.className}>
-        <UserProvider initialUser={user}>{children}</UserProvider>
+        <UserProvider initialUser={user}>
+          {children}
+          <Toaster />
+        </UserProvider>
       </body>
     </html>
   );

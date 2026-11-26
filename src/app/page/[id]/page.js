@@ -18,6 +18,7 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { resolveImageUrl } from "~/lib/storage";
+import { toast } from "~/store/toast";
 
 const Maps = dynamic(() => import("~/components/Maps"), { ssr: false });
 
@@ -30,7 +31,6 @@ export default function DetailPage() {
   const [pageData, setPageData] = useState(null);
   const [pageComment, setPageComment] = useState(null);
   const [commentInput, setCommentInput] = useState("");
-  const [commentError, setCommentError] = useState("");
 
   const [fetchingData, setFetchingData] = useState(true);
   const [isPostComment, setIsPostComment] = useState(false);
@@ -106,7 +106,6 @@ export default function DetailPage() {
     if (!body) return;
 
     setIsPostComment(true);
-    setCommentError("");
 
     const { data, error } = await supabase
       .from("comments")
@@ -119,13 +118,14 @@ export default function DetailPage() {
       .single();
 
     if (error) {
-      setCommentError(error.message);
+      toast.error(error.message);
     } else {
       setPageComment((prev) => [
         { ...data, profiles: user?.user_metadata },
         ...(prev ?? []),
       ]);
       setCommentInput("");
+      toast.success("Ulasan berhasil dikirim.");
     }
 
     setIsPostComment(false);
@@ -294,10 +294,7 @@ export default function DetailPage() {
                 className="textarea textarea-bordered mt-4 w-full"
                 placeholder="Beri ulasan"
                 value={commentInput}
-                onChange={(e) => {
-                  setCommentInput(e.target.value);
-                  setCommentError("");
-                }}
+                onChange={(e) => setCommentInput(e.target.value)}
                 rows={4}
                 disabled={!user}
               ></textarea>
@@ -319,11 +316,6 @@ export default function DetailPage() {
                   "Masuk untuk komentar"
                 )}
               </button>
-              {commentError && (
-                <div role="alert" className="alert alert-error mt-2 text-sm">
-                  {commentError}
-                </div>
-              )}
             </div>
 
             <div className="mt-8 space-y-2">

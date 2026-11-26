@@ -4,12 +4,11 @@ import { createClient } from "~/lib/supabase/client";
 import Link from "next/link";
 import { useState } from "react";
 import Logo from "~/components/Logo";
+import { toast } from "~/store/toast";
 
 export default function ForgetPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
 
   const supabase = createClient();
 
@@ -18,17 +17,15 @@ export default function ForgetPassword() {
     if (!email) return;
 
     setLoading(true);
-    setError("");
-    setMessage("");
 
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/auth/callback?next=/auth/reset-password`,
     });
 
     if (error) {
-      setError(error.message);
+      toast.error(error.message);
     } else {
-      setMessage(
+      toast.success(
         "Jika email terdaftar, tautan untuk mengatur ulang kata sandi telah dikirim.",
       );
     }
@@ -66,18 +63,6 @@ export default function ForgetPassword() {
             required
           />
         </div>
-
-        {message && (
-          <div role="status" className="alert alert-success mt-4 text-sm">
-            {message}
-          </div>
-        )}
-
-        {error && (
-          <div role="alert" className="alert alert-error mt-4 text-sm">
-            {error}
-          </div>
-        )}
 
         <button
           type="submit"

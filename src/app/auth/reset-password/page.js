@@ -4,6 +4,7 @@ import { createClient } from "~/lib/supabase/client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Logo from "~/components/Logo";
+import { toast } from "~/store/toast";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -11,7 +12,6 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
   const [hasSession, setHasSession] = useState(false);
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
   const supabase = createClient();
@@ -40,10 +40,9 @@ export default function ResetPassword() {
 
   const handleReset = async (e) => {
     e.preventDefault();
-    setError("");
 
     if (password !== confirmPassword) {
-      setError("Konfirmasi kata sandi tidak cocok.");
+      toast.error("Konfirmasi kata sandi tidak cocok.");
       return;
     }
 
@@ -52,7 +51,7 @@ export default function ResetPassword() {
     const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
-      setError(
+      toast.error(
         error.message.toLowerCase().includes("session")
           ? "Tautan reset tidak valid atau sudah kedaluwarsa. Silakan minta tautan baru."
           : error.message,
@@ -62,6 +61,7 @@ export default function ResetPassword() {
     }
 
     await supabase.auth.signOut();
+    toast.success("Kata sandi berhasil diperbarui.");
     setSuccess(true);
     setLoading(false);
   };
@@ -174,6 +174,12 @@ export default function ResetPassword() {
         </div>
 
         {error && (
+          <div role="alert" className="alert alert-error mt-4 text-sm">
+            {error}
+          </div>
+        )}
+
+        {false && (
           <div role="alert" className="alert alert-error mt-4 text-sm">
             {error}
           </div>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Logo from "~/components/Logo";
 import { useUser } from "~/store/UserProvider";
+import { toast } from "~/store/toast";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -20,15 +21,25 @@ export default function SignIn() {
     e.preventDefault();
     if (!email || !password) return;
     setLoading(true);
+
     const {
       data: { user },
+      error,
     } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
+
     setUser(user);
+    toast.success("Berhasil masuk.");
     setLoading(false);
-    router.refresh();
+    router.push("/");
   };
 
   return (
