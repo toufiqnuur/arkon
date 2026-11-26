@@ -1,18 +1,19 @@
 /* eslint-disable @next/next/no-img-element */
 import { RiMapPinFill, RiMoneyDollarCircleFill } from "react-icons/ri";
+import { resolveImageUrl } from "~/lib/storage";
 
 export default function CardItem({ name, poster, provinsi, tarif, kategori }) {
   return (
-    <div className="card border bg-base-100 shadow-xl">
+    <div className="card bg-base-100 shadow-xl">
       <figure className="aspect-video">
         <img
           className="aspect-video h-full object-cover"
-          src={poster}
+          src={resolveImageUrl(poster)}
           alt={name}
         />
       </figure>
       <div className="px-4 py-3">
-        <h2 className="text-md font-semibold leading-tight">{name}</h2>
+        <h2 className="text-md leading-tight font-semibold">{name}</h2>
         {/* <div className="mt-2 inline-flex w-full items-center">
           <RiStarFill size={16} className="text-orange-600" />{" "}
           <span className="ml-1 block text-sm">5.0 (7)</span>

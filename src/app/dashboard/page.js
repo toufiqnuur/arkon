@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "~/lib/supabase/client";
+import { uploadImage } from "~/lib/storage";
 import clsx from "clsx";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,24 +16,47 @@ export default function Dashboard() {
   const { user } = useUser();
   const { data, setData } = useUserPage();
   const [currentData, setCurrentData] = useState(null);
+  const [fetching, setFetching] = useState(true);
+  const [fetchError, setFetchError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [selectedLogo, setSelectedLogo] = useState(null);
   const [selectedImages, setSelectedImages] = useState(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setFetching(false);
+      return;
+    }
+
+    let active = true;
+    setFetching(true);
+    setFetchError("");
+    setData(null);
+    setCurrentData(null);
 
     (async () => {
-      const { data: pages, error } = await supabase
+      const { data: pages, error: fetchError } = await supabase
         .from("pages")
         .select()
         .eq("user_id", user.id);
 
-      if (error) return;
+      if (!active) return;
 
-      setData(pages);
-      setCurrentData(pages.length ? 0 : null);
+      if (fetchError) {
+        setFetchError(fetchError.message);
+      } else {
+        setData(pages);
+        setCurrentData(pages.length ? 0 : null);
+      }
+
+      setFetching(false);
     })();
+
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleUpdate = async (model) => {
@@ -40,47 +64,41 @@ export default function Dashboard() {
     if (!current) return;
 
     setLoading(true);
-    const payload = model;
-    if (selectedLogo) {
-      const { data, error } = await supabase.storage
-        .from("images")
-        .upload(`${btoa(user?.id)}-${+new Date()}`, selectedLogo, {
-          cacheControl: "3600",
-          upsert: false,
-        });
-      if (!error)
-        payload.images.logo = `https://darswxlsordzgcemxqkt.supabase.co/storage/v1/object/public/images/${data.path}`;
-    }
-    if (selectedImages) {
-      const urls = [];
-      for (let i = 0; i < selectedImages.length; i++) {
-        const file = selectedImages[i];
-        const { data, error } = await supabase.storage
-          .from("images")
-          .upload(`${btoa(payload?.id)}-${+new Date()}`, file, {
-            cacheControl: "3600",
-            upsert: false,
-          });
-        if (!error) {
-          urls.push(
-            `https://darswxlsordzgcemxqkt.supabase.co/storage/v1/object/public/images/${data.path}`,
-          );
-        }
+    setError("");
+
+    try {
+      const payload = {
+        ...model,
+        images: { ...(model.images ?? current.images ?? {}) },
+      };
+
+      if (selectedLogo) {
+        payload.images.logo = await uploadImage(supabase, selectedLogo);
       }
-      if (urls.length) payload.images.slides = urls;
-    }
-    const { data: res } = await supabase
-      .from("pages")
-      .update(payload)
-      .eq("id", current.id)
-      .select()
-      .single();
-    if (res) {
+
+      if (selectedImages?.length) {
+        payload.images.slides = await Promise.all(
+          selectedImages.map((file) => uploadImage(supabase, file)),
+        );
+      }
+
+      const { data: res, error: updateError } = await supabase
+        .from("pages")
+        .update(payload)
+        .eq("id", current.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
       setData(data.map((item) => (item.id === res.id ? res : item)));
+      setSelectedLogo(null);
+      setSelectedImages(null);
+    } catch (err) {
+      setError(err?.message ?? "Gagal menyimpan halaman.");
+    } finally {
+      setLoading(false);
     }
-    setSelectedLogo(null);
-    setSelectedImages(null);
-    setLoading(false);
   };
 
   return (
@@ -93,6 +111,16 @@ export default function Dashboard() {
         </ul>
       </div>
       <h1 className="text-2xl font-bold">Dashboard</h1>
+      {error && (
+        <div role="alert" className="alert alert-error mt-4 text-sm">
+          {error}
+        </div>
+      )}
+      {fetchError && (
+        <div role="alert" className="alert alert-error mt-4 text-sm">
+          Gagal memuat halaman: {fetchError}
+        </div>
+      )}
       <div className="mt-4 flex flex-wrap items-end gap-4">
         <div className="form-control w-full md:max-w-xs">
           <label className="label">
@@ -121,7 +149,11 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {data?.length ? (
+      {fetching ? (
+        <div className="py-16 text-center">
+          <span className="loading loading-dots loading-lg"></span>
+        </div>
+      ) : data?.length ? (
         <div className="flex flex-col-reverse gap-4 md:flex-row">
           <Form
             data={data[currentData]}

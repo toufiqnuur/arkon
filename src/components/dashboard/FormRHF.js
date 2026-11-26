@@ -262,7 +262,14 @@ export default function FormRHF({ data, onSave, isLoading }) {
       </div>
 
       <button type="submit" className="btn btn-primary" disabled={isLoading}>
-        Simpan
+        {isLoading ? (
+          <>
+            <span className="loading loading-spinner loading-sm"></span>
+            Menyimpan...
+          </>
+        ) : (
+          "Simpan"
+        )}
       </button>
     </form>
   );

@@ -17,6 +17,7 @@ import dayjs from "dayjs";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { resolveImageUrl } from "~/lib/storage";
 
 const Maps = dynamic(() => import("~/components/Maps"), { ssr: false });
 
@@ -165,7 +166,7 @@ export default function DetailPage() {
             {pageData?.images?.slides?.map((url, idx) => (
               <SwiperSlide className="aspect-[4/3] bg-slate-300" key={idx}>
                 <img
-                  src={url}
+                  src={resolveImageUrl(url)}
                   className="h-full object-cover"
                   loading="lazy"
                   alt=""
@@ -183,7 +184,7 @@ export default function DetailPage() {
           <div className="flex space-x-4">
             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-slate-200">
               <img
-                src={pageData?.images?.logo}
+                src={resolveImageUrl(pageData?.images?.logo)}
                 className="h-full object-cover"
                 alt=""
               />
