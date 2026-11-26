@@ -64,6 +64,16 @@ export default function SignUp() {
       return;
     }
 
+    // With email confirmation enabled, Supabase does not error on an
+    // existing email — it returns a user with an empty identities array.
+    const isExistingUser = data.user && (data.user.identities?.length ?? 1) === 0;
+
+    if (isExistingUser) {
+      toast.error("Email sudah terdaftar. Silakan masuk.");
+      setLoading(false);
+      return;
+    }
+
     if (data.session) {
       // Email confirmation is disabled: the user is signed in right away.
       setUser(data.session.user);
