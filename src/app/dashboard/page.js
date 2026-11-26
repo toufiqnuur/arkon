@@ -6,7 +6,9 @@ import clsx from "clsx";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import Form from "~/components/dashboard/Form";
+// Old controlled-form implementation (kept for rollback)
+// import Form from "~/components/dashboard/Form";
+import Form from "~/components/dashboard/FormRHF";
 import InputImage from "~/components/dashboard/InputImage";
 import { useUser } from "~/store/UserProvider";
 import { useUserPage } from "~/store";
@@ -132,7 +134,11 @@ export default function Dashboard() {
               currentData !== null && "text-primary",
             )}
             value={currentData ?? ""}
-            onChange={(e) => setCurrentData(Number(e.target.value))}
+            onChange={(e) => {
+              setCurrentData(Number(e.target.value));
+              setSelectedLogo(null);
+              setSelectedImages(null);
+            }}
           >
             <option value="" disabled>
               Pilih halaman
@@ -161,6 +167,7 @@ export default function Dashboard() {
             isLoading={loading}
           />
           <InputImage
+            key={currentData ?? "none"}
             previewLogo={data[currentData]?.images?.logo}
             previewImages={data[currentData]?.images?.slides}
             onAvatarChange={(fileObj) => setSelectedLogo(fileObj)}

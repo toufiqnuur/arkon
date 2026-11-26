@@ -5,7 +5,9 @@ import { uploadImage } from "~/lib/storage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Form from "~/components/dashboard/Form";
+// Old controlled-form implementation (kept for rollback)
+// import Form from "~/components/dashboard/Form";
+import Form from "~/components/dashboard/FormRHF";
 import InputImage from "~/components/dashboard/InputImage";
 import { useUserPage } from "~/store";
 
