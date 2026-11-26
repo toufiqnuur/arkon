@@ -1,9 +1,8 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import "./globals.css";
 import { Inter } from "next/font/google";
-import { cookies } from "next/headers";
-import { useUser } from "~/store";
-import { UserInit } from "~/store/StoreInit";
+import { createClient } from "~/lib/supabase/server";
+import Toaster from "~/components/Toaster";
+import { UserProvider } from "~/store/UserProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,11 +14,10 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-  const supabase = createServerComponentClient({ cookies: cookies });
+  const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  useUser.setState({ user: session?.user });
+    data: { user },
+  } = await supabase.auth.getUser();
 
   return (
     <html lang="en" data-theme="light">
@@ -27,8 +25,10 @@ export default async function RootLayout({ children }) {
         <meta name="dicoding:email" content="taufik2017yk@gmail.com" />
       </head>
       <body className={inter.className}>
-        <UserInit data={{ user: session?.user }} />
-        {children}
+        <UserProvider initialUser={user}>
+          {children}
+          <Toaster />
+        </UserProvider>
       </body>
     </html>
   );

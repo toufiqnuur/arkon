@@ -1,16 +1,20 @@
 "use client";
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "~/lib/supabase/client";
+import { uploadImage } from "~/lib/storage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Form from "~/components/dashboard/Form";
+// Old controlled-form implementation (kept for rollback)
+// import Form from "~/components/dashboard/Form";
+import Form from "~/components/dashboard/FormRHF";
 import InputImage from "~/components/dashboard/InputImage";
-import { useUser, useUserPage } from "~/store";
+import { useUserPage } from "~/store";
+import { toast } from "~/store/toast";
 
 export default function AddNew() {
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const { updateData } = useUserPage();
   const [loading, setLoading] = useState(false);
   const [selectedLogo, setSelectedLogo] = useState(null);
@@ -18,43 +22,39 @@ export default function AddNew() {
 
   const handleSave = async (model) => {
     setLoading(true);
-    const payload = model;
-    if (selectedLogo) {
-      const { data, error } = await supabase.storage
-        .from("images")
-        .upload(`${btoa(payload?.id)}-${+new Date()}`, selectedLogo, {
-          cacheControl: "3600",
-          upsert: false,
-        });
-      if (!error)
-        payload.images.logo = `https://darswxlsordzgcemxqkt.supabase.co/storage/v1/object/public/images/${data.path}`;
-    }
-    if (selectedImages) {
-      const urls = [];
-      for (let i = 0; i < selectedImages.length; i++) {
-        const file = selectedImages[i];
-        const { data, error } = await supabase.storage
-          .from("images")
-          .upload(`${btoa(payload?.id)}-${+new Date()}`, file, {
-            cacheControl: "3600",
-            upsert: false,
-          });
-        if (!error) {
-          urls.push(
-            `https://darswxlsordzgcemxqkt.supabase.co/storage/v1/object/public/images/${data.path}`,
-          );
-        }
+
+    try {
+      const payload = {
+        ...model,
+        images: { ...(model.images ?? { icon: null, slides: null }) },
+      };
+
+      if (selectedLogo) {
+        payload.images.logo = await uploadImage(supabase, selectedLogo);
       }
-      if (urls.length) payload.images.slides = urls;
+
+      if (selectedImages?.length) {
+        payload.images.slides = await Promise.all(
+          selectedImages.map((file) => uploadImage(supabase, file)),
+        );
+      }
+
+      const { data, error: insertError } = await supabase
+        .from("pages")
+        .insert(payload)
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      updateData(data);
+      toast.success("Halaman berhasil dibuat.");
+      router.push("/dashboard");
+    } catch (err) {
+      toast.error(err?.message ?? "Gagal menyimpan halaman.");
+    } finally {
+      setLoading(false);
     }
-    const { data } = await supabase
-      .from("pages")
-      .insert(payload)
-      .select()
-      .single();
-    updateData(data);
-    setLoading(false);
-    router.push("/dashboard");
   };
 
   return (

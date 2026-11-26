@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "~/lib/supabase/client";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -32,57 +32,66 @@ const SearchNotFound = () => {
   );
 };
 
+const SearchLoading = () => {
+  return (
+    <div className="py-16 text-center">
+      <span className="loading loading-dots loading-lg"></span>
+    </div>
+  );
+};
+
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const keyword = searchParams.get("q");
   const lokasiParams = searchParams.get("lokasi");
-  const supabase = createClientComponentClient();
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [notFound, setNotFound] = useState(false);
+  const supabase = createClient();
+  const queryKey = `${keyword ?? ""}::${lokasiParams ?? ""}`;
+  const [search, setSearch] = useState({ key: null, data: null, error: null });
+  const loading = search.key !== queryKey;
 
   useEffect(() => {
-    setLoading(true);
+    if (!keyword) return;
+
+    let active = true;
+
     (async () => {
-      if (lokasiParams) {
-        const { data, error } = await supabase
+      try {
+        let query = supabase
           .from("pages")
           .select()
-          .textSearch("name", `${keyword}`, {
-            type: "websearch",
-          })
-          .eq("provinsi", lokasiParams);
-        if (!error) {
-          setResult(data);
-        } else {
-          setNotFound(true);
-        }
-      } else {
-        const { data, error } = await supabase
-          .from("pages")
-          .select()
-          .textSearch("name", `${keyword}`, {
+          .textSearch("name", keyword, {
             type: "websearch",
           });
-        if (!error) {
-          setResult(data);
-        } else {
-          setNotFound(true);
-        }
+
+        if (lokasiParams) query = query.eq("provinsi", lokasiParams);
+
+        const { data, error } = await query;
+
+        if (!active) return;
+
+        setSearch({ key: queryKey, data: data ?? [], error });
+      } catch (err) {
+        if (!active) return;
+
+        setSearch({ key: queryKey, data: [], error: err });
       }
     })();
-    setLoading(false);
-  }, [keyword, lokasiParams]);
+
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryKey, keyword, lokasiParams]);
 
   if (!keyword) {
     return <SearchNotFound />;
   }
 
   if (loading) {
-    return <span className="loading loading-dots loading-lg"></span>;
+    return <SearchLoading />;
   }
 
-  if (!result?.length) {
+  if (search.error || !search.data?.length) {
     return <SearchNotFound />;
   }
 
@@ -92,15 +101,15 @@ export default function SearchPage() {
         Menampilkan hasil untuk "{keyword}"
       </h3>
       <div className="mt-4 grid gap-4 md:grid-cols-3">
-        {result?.map((data) => (
+        {search.data.map((data) => (
           <Link
-            href={`/page/${btoa("page-" + data.id)}`}
+            href={`/page/${data.id}`}
             key={data.id}
             className="hover:contrast-50 active:scale-95"
           >
             <CardItem
               name={data.name}
-              poster={data.images?.slides[0]}
+              poster={data.images?.slides?.[0]}
               provinsi={data.provinsi}
               tarif={data.tarif}
               kategori={data.kategori}

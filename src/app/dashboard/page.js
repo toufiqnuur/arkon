@@ -1,78 +1,104 @@
 "use client";
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "~/lib/supabase/client";
+import { uploadImage } from "~/lib/storage";
 import clsx from "clsx";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import Form from "~/components/dashboard/Form";
+// Old controlled-form implementation (kept for rollback)
+// import Form from "~/components/dashboard/Form";
+import Form from "~/components/dashboard/FormRHF";
 import InputImage from "~/components/dashboard/InputImage";
-import { useUser, useUserPage } from "~/store";
+import { useUser } from "~/store/UserProvider";
+import { useUserPage } from "~/store";
+import { toast } from "~/store/toast";
 
 export default function Dashboard() {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const { user } = useUser();
-  const { data, setData, updateData } = useUserPage();
+  const { data, setData } = useUserPage();
   const [currentData, setCurrentData] = useState(null);
+  const [fetching, setFetching] = useState(true);
   const [loading, setLoading] = useState(false);
   const [selectedLogo, setSelectedLogo] = useState(null);
   const [selectedImages, setSelectedImages] = useState(null);
 
   useEffect(() => {
+    if (!user) {
+      setFetching(false);
+      return;
+    }
+
+    let active = true;
+    setFetching(true);
+    setData(null);
+    setCurrentData(null);
+
     (async () => {
-      const { data } = await supabase
+      const { data: pages, error: fetchError } = await supabase
         .from("pages")
         .select()
         .eq("user_id", user.id);
-      if (data) {
-        setData(data);
-        setCurrentData(0);
+
+      if (!active) return;
+
+      if (fetchError) {
+        toast.error(`Gagal memuat halaman: ${fetchError.message}`);
+      } else {
+        setData(pages);
+        setCurrentData(pages.length ? 0 : null);
       }
+
+      setFetching(false);
     })();
-  }, []);
+
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleUpdate = async (model) => {
+    const current = data?.[currentData];
+    if (!current) return;
+
     setLoading(true);
-    const payload = model;
-    if (selectedLogo) {
-      const { data, error } = await supabase.storage
-        .from("images")
-        .upload(`${btoa(user?.id)}-${+new Date()}`, selectedLogo, {
-          cacheControl: "3600",
-          upsert: false,
-        });
-      if (!error)
-        payload.images.logo = `https://darswxlsordzgcemxqkt.supabase.co/storage/v1/object/public/images/${data.path}`;
-    }
-    if (selectedImages) {
-      const urls = [];
-      for (let i = 0; i < selectedImages.length; i++) {
-        const file = selectedImages[i];
-        const { data, error } = await supabase.storage
-          .from("images")
-          .upload(`${btoa(payload?.id)}-${+new Date()}`, file, {
-            cacheControl: "3600",
-            upsert: false,
-          });
-        if (!error) {
-          urls.push(
-            `https://darswxlsordzgcemxqkt.supabase.co/storage/v1/object/public/images/${data.path}`,
-          );
-        }
+
+    try {
+      const payload = {
+        ...model,
+        images: { ...(model.images ?? current.images ?? {}) },
+      };
+
+      if (selectedLogo) {
+        payload.images.logo = await uploadImage(supabase, selectedLogo);
       }
-      if (urls.length) payload.images.slides = urls;
+
+      if (selectedImages?.length) {
+        payload.images.slides = await Promise.all(
+          selectedImages.map((file) => uploadImage(supabase, file)),
+        );
+      }
+
+      const { data: res, error: updateError } = await supabase
+        .from("pages")
+        .update(payload)
+        .eq("id", current.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      setData(data.map((item) => (item.id === res.id ? res : item)));
+      setSelectedLogo(null);
+      setSelectedImages(null);
+      toast.success("Halaman berhasil diperbarui.");
+    } catch (err) {
+      toast.error(err?.message ?? "Gagal menyimpan halaman.");
+    } finally {
+      setLoading(false);
     }
-    const { data: res } = await supabase
-      .from("pages")
-      .update(payload)
-      .eq("id", data[currentData].id)
-      .select()
-      .single();
-    let index = data.findIndex((item) => item.id == data[currentData].id);
-    let newData = data;
-    data[index] = res;
-    setData(newData);
-    setLoading(false);
   };
 
   return (
@@ -93,18 +119,23 @@ export default function Dashboard() {
           <select
             className={clsx(
               "select select-bordered font-semibold",
-              currentData && "text-primary",
+              currentData !== null && "text-primary",
             )}
-            value={currentData}
-            onChange={(e) => setCurrentData(e.target.value)}
+            value={currentData ?? ""}
+            onChange={(e) => {
+              setCurrentData(Number(e.target.value));
+              setSelectedLogo(null);
+              setSelectedImages(null);
+            }}
           >
-            <option disabled>Pilih halaman</option>
-            {data &&
-              data.map((data, idx) => (
-                <option key={data.id} value={idx}>
-                  {data.name}
-                </option>
-              ))}
+            <option value="" disabled>
+              Pilih halaman
+            </option>
+            {data?.map((page, idx) => (
+              <option key={page.id} value={idx}>
+                {page.name}
+              </option>
+            ))}
           </select>
         </div>
         <Link href="/dashboard/new" className="btn btn-primary">
@@ -112,7 +143,11 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {data ? (
+      {fetching ? (
+        <div className="py-16 text-center">
+          <span className="loading loading-dots loading-lg"></span>
+        </div>
+      ) : data?.length ? (
         <div className="flex flex-col-reverse gap-4 md:flex-row">
           <Form
             data={data[currentData]}
@@ -120,6 +155,7 @@ export default function Dashboard() {
             isLoading={loading}
           />
           <InputImage
+            key={currentData ?? "none"}
             previewLogo={data[currentData]?.images?.logo}
             previewImages={data[currentData]?.images?.slides}
             onAvatarChange={(fileObj) => setSelectedLogo(fileObj)}
@@ -127,7 +163,7 @@ export default function Dashboard() {
           />
         </div>
       ) : (
-        <div className="hidden py-16 text-center">
+        <div className="py-16 text-center">
           <Image
             src="/empty.jpeg"
             width={250}

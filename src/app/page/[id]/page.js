@@ -9,19 +9,24 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { useDataStore, useUser } from "~/store";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { useDataStore } from "~/store";
+import { useUser } from "~/store/UserProvider";
+import { createClient } from "~/lib/supabase/client";
 import clsx from "clsx";
 import dayjs from "dayjs";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { resolveImageUrl } from "~/lib/storage";
+import { toast } from "~/store/toast";
 
 const Maps = dynamic(() => import("~/components/Maps"), { ssr: false });
 
-export default function DetailPage({ params }) {
+export default function DetailPage() {
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const params = useParams();
+  const pageId = params?.id;
+  const supabase = createClient();
 
   const [pageData, setPageData] = useState(null);
   const [pageComment, setPageComment] = useState(null);
@@ -31,81 +36,99 @@ export default function DetailPage({ params }) {
   const [isPostComment, setIsPostComment] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
-  const { data, updateData } = useDataStore();
+  const updateData = useDataStore((state) => state.updateData);
   const { user } = useUser();
 
   useEffect(() => {
-    let pageId;
-    try {
-      pageId = atob(params.id);
-    } catch (error) {
+    if (!pageId) {
       setNotFound(true);
       setFetchingData(false);
       return;
     }
-    pageId = pageId.slice(5, pageId.length);
-    if (isNaN(pageId)) {
-      setNotFound(true);
-      setFetchingData(false);
-      return;
-    }
-    const isFound = data && data.filter((item) => item.id == pageId);
-    if (isFound.length) {
-      setPageData(isFound[0]);
-    } else {
-      (async () => {
-        const { data, error } = await supabase
+
+    let active = true;
+    setFetchingData(true);
+    setNotFound(false);
+
+    (async () => {
+      const cached = useDataStore
+        .getState()
+        .data?.find((item) => String(item.id) === String(pageId));
+
+      if (cached) {
+        setPageData(cached);
+      } else {
+        const { data: page, error } = await supabase
           .from("pages")
           .select()
           .eq("id", pageId)
           .single();
+
+        if (!active) return;
+
         if (error) {
           setNotFound(true);
-        } else {
-          setPageData(data);
-          updateData(data);
+          setFetchingData(false);
+          return;
         }
-      })();
-    }
-    setFetchingData(false);
-    console.log(notFound);
-    (async () => {
-      const { data } = await supabase
+
+        setPageData(page);
+        updateData(page);
+      }
+
+      const { data: comments } = await supabase
         .from("comments")
         .select(`*, profiles(*)`)
         .eq("page_id", pageId)
         .order("id", { ascending: false });
-      setPageComment(data);
-    })();
-  }, [params]);
 
-  const handleKirimKomentar = () => {
-    let pageId = atob(params.id);
-    pageId = pageId.slice(5, pageId.length);
+      if (!active) return;
+
+      setPageComment(comments ?? []);
+      setFetchingData(false);
+    })();
+
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageId]);
+
+  const handleKirimKomentar = async () => {
+    if (!pageId) return;
+
     if (!user) {
       router.push("/auth/signin");
-    } else {
-      setIsPostComment(true);
-      (async () => {
-        const { data } = await supabase
-          .from("comments")
-          .insert({
-            user_id: user.id,
-            page_id: pageId,
-            body: commentInput,
-          })
-          .select()
-          .single();
-        pageComment
-          ? setPageComment((prev) => [
-              { ...data, profiles: user?.user_metadata },
-              ...prev,
-            ])
-          : setPageComment([{ ...data, profiles: user?.user_metadata }]);
-      })();
-      setCommentInput("");
-      setIsPostComment(false);
+      return;
     }
+
+    const body = commentInput.trim();
+    if (!body) return;
+
+    setIsPostComment(true);
+
+    const { data, error } = await supabase
+      .from("comments")
+      .insert({
+        user_id: user.id,
+        page_id: pageId,
+        body,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      setPageComment((prev) => [
+        { ...data, profiles: user?.user_metadata },
+        ...(prev ?? []),
+      ]);
+      setCommentInput("");
+      toast.success("Ulasan berhasil dikirim.");
+    }
+
+    setIsPostComment(false);
   };
 
   if (fetchingData) {
@@ -133,34 +156,41 @@ export default function DetailPage({ params }) {
     );
   }
 
+  const logoUrl = resolveImageUrl(pageData?.images?.logo);
+  const slides = (pageData?.images?.slides ?? []).filter(Boolean);
+
   return (
     <>
       <div className="grid grid-cols-1 gap-y-12 md:grid-cols-8 md:gap-x-8 md:gap-y-10">
         <div className="md:col-span-3">
-          <Swiper
-            modules={[Autoplay, Navigation, Pagination, A11y]}
-            navigation
-            loop
-            autoplay={{
-              delay: 2500,
-              disableOnInteraction: false,
-            }}
-            pagination={{ clickable: true }}
-            scrollbar={{ draggable: true }}
-            slidesPerView={1}
-            className="aspect-[4/3] rounded"
-          >
-            {pageData?.images?.slides?.map((url, idx) => (
-              <SwiperSlide className="aspect-[4/3] bg-slate-300" key={idx}>
-                <img
-                  src={url}
-                  className="h-full object-cover"
-                  loading="lazy"
-                  alt=""
-                />
-              </SwiperSlide>
-            ))}
-          </Swiper>
+          {slides.length ? (
+            <Swiper
+              modules={[Autoplay, Navigation, Pagination, A11y]}
+              navigation
+              loop
+              autoplay={{
+                delay: 2500,
+                disableOnInteraction: false,
+              }}
+              pagination={{ clickable: true }}
+              scrollbar={{ draggable: true }}
+              slidesPerView={1}
+              className="aspect-[4/3] rounded"
+            >
+              {slides.map((url, idx) => (
+                <SwiperSlide className="aspect-[4/3] bg-slate-300" key={idx}>
+                  <img
+                    src={resolveImageUrl(url)}
+                    className="h-full object-cover"
+                    loading="lazy"
+                    alt=""
+                  />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          ) : (
+            <div className="aspect-[4/3] rounded bg-slate-200"></div>
+          )}
           {pageData?.lokasi?.koordinat && (
             <div className="mt-8 hidden aspect-square overflow-hidden rounded md:block">
               <Maps position={pageData?.lokasi?.koordinat?.split(",")} />
@@ -170,11 +200,13 @@ export default function DetailPage({ params }) {
         <div className="text-sm md:col-span-5 md:text-base">
           <div className="flex space-x-4">
             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-slate-200">
-              <img
-                src={pageData?.images?.logo}
-                className="h-full object-cover"
-                alt=""
-              />
+              {logoUrl && (
+                <img
+                  src={logoUrl}
+                  className="h-full object-cover"
+                  alt=""
+                />
+              )}
             </div>
             <div>
               <h2 className="card-title">{pageData?.name}</h2>
@@ -269,11 +301,13 @@ export default function DetailPage({ params }) {
               <button
                 className="btn btn-primary mt-2"
                 onClick={handleKirimKomentar}
-                disabled={isPostComment}
+                disabled={
+                  isPostComment || (Boolean(user) && !commentInput.trim())
+                }
               >
                 {isPostComment ? (
                   <>
-                    <span class="loading loading-spinner"></span>
+                    <span className="loading loading-spinner"></span>
                     loading
                   </>
                 ) : user ? (

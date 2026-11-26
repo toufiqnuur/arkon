@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { resolveImageUrl } from "~/lib/storage";
 
 export default function InputImage({
   previewLogo,
@@ -8,28 +9,39 @@ export default function InputImage({
 }) {
   const [currLogo, setCurrtLogo] = useState(null);
   const [currImages, setCurrtImages] = useState(null);
+  const objectUrls = useRef([]);
 
   useEffect(() => {
-    setCurrtLogo(previewLogo);
-    setCurrtImages(previewImages);
+    setCurrtLogo(resolveImageUrl(previewLogo));
+    setCurrtImages((previewImages ?? []).map(resolveImageUrl));
   }, [previewLogo, previewImages]);
+
+  useEffect(() => {
+    return () => {
+      objectUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
+
+  const createObjectUrl = (file) => {
+    const url = URL.createObjectURL(file);
+    objectUrls.current.push(url);
+    return url;
+  };
 
   const logoChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      setCurrtLogo(URL.createObjectURL(e.target.files[0]));
+      setCurrtLogo(createObjectUrl(e.target.files[0]));
       onAvatarChange(e.target.files[0]);
+      e.target.value = "";
     }
   };
 
   const slidesChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      setCurrtImages(
-        Object.entries(e.target.files).map((obj) =>
-          URL.createObjectURL(obj[1]),
-        ),
-      );
-
-      onImagesChange(e.target.files);
+      const files = Array.from(e.target.files);
+      setCurrtImages(files.map(createObjectUrl));
+      onImagesChange(files);
+      e.target.value = "";
     }
   };
 

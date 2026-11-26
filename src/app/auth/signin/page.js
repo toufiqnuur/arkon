@@ -1,11 +1,12 @@
 "use client";
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "~/lib/supabase/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Logo from "~/components/Logo";
-import { useUser } from "~/store";
+import { useUser } from "~/store/UserProvider";
+import { toast } from "~/store/toast";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -14,32 +15,46 @@ export default function SignIn() {
 
   const router = useRouter();
   const { setUser } = useUser();
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   const handleSignIn = async (e) => {
     e.preventDefault();
     if (!email || !password) return;
     setLoading(true);
+
     const {
       data: { user },
+      error,
     } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim(),
       password,
     });
+
+    if (error) {
+      if (error.message.toLowerCase().includes("invalid login credentials")) {
+        toast.error("Email atau kata sandi salah.");
+      } else {
+        toast.error(error.message);
+      }
+      setLoading(false);
+      return;
+    }
+
     setUser(user);
+    toast.success("Berhasil masuk.");
     setLoading(false);
-    router.refresh();
+    router.push("/");
   };
 
   return (
     <div className="mx-auto max-w-lg px-4">
       <form
-        className="mt-10 border px-4 pb-8 pt-6 shadow-lg"
+        className="mt-10 rounded-lg px-4 pt-6 pb-8 shadow-lg"
         onSubmit={handleSignIn}
       >
         <div className="text-center">
           <Link href="/" className="btn btn-ghost">
-            <Logo type="full" className="mx-auto text-primary" />
+            <Logo type="full" className="text-primary mx-auto" />
           </Link>
         </div>
 
@@ -53,6 +68,8 @@ export default function SignIn() {
             className="input input-bordered w-full"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            required
           />
         </div>
 
@@ -66,7 +83,18 @@ export default function SignIn() {
             className="input input-bordered w-full"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            required
           />
+        </div>
+
+        <div className="mt-2 text-right">
+          <Link
+            href="/auth/forget-password"
+            className="link link-hover text-primary text-sm"
+          >
+            Lupa kata sandi?
+          </Link>
         </div>
 
         <button
@@ -74,12 +102,12 @@ export default function SignIn() {
           className="btn btn-primary mt-6 w-full"
           disabled={loading}
         >
-          Masuk
+          {loading ? "Masuk..." : "Masuk"}
         </button>
 
         <div className="mt-6">
           Belum punya akun?{" "}
-          <Link href="/auth/signup" className="font-semibold text-primary">
+          <Link href="/auth/signup" className="text-primary font-semibold">
             Daftar
           </Link>
         </div>

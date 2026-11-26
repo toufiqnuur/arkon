@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import provinsi from "~/constant/provinsi";
-import { useUser } from "~/store";
+import { useUser } from "~/store/UserProvider";
 
 export default function Form({ data, onSave, isLoading }) {
   const [name, setName] = useState("");
@@ -13,22 +13,22 @@ export default function Form({ data, onSave, isLoading }) {
   const [kontak, setKontak] = useState("");
   const [lokasi, setLokasi] = useState({ full: "", koordinat: "" });
   const [kategori, setKategori] = useState("");
-  const [selectedProvinsi, setSelectedProvinsi] = useState(null);
+  const [selectedProvinsi, setSelectedProvinsi] = useState("");
   const [images, setImages] = useState({ icon: null, slides: null });
 
   const { user } = useUser();
 
   useEffect(() => {
     if (data) {
-      setName(data.name);
-      setShortDesc(data.short_desc);
-      setTarif(data.tarif);
-      setDetail(data.detail);
-      setKontak(data.kontak.join(","));
-      setKategori(data.kategori.join(","));
-      setLokasi(data.lokasi);
-      setSelectedProvinsi(data.provinsi);
-      setImages(data.images);
+      setName(data.name ?? "");
+      setShortDesc(data.short_desc ?? "");
+      setTarif(data.tarif ?? "");
+      setDetail(data.detail ?? "");
+      setKontak((data.kontak ?? []).join(","));
+      setKategori((data.kategori ?? []).join(","));
+      setLokasi({ full: "", koordinat: "", ...data.lokasi });
+      setSelectedProvinsi(data.provinsi ?? "");
+      setImages(data.images ?? { icon: null, slides: null });
     }
   }, [data]);
 
@@ -179,9 +179,13 @@ export default function Form({ data, onSave, isLoading }) {
             className={clsx("select select-bordered font-semibold")}
             value={selectedProvinsi}
             onChange={(e) => setSelectedProvinsi(e.target.value)}
+            required
           >
-            {provinsi.map((name, idx) => (
-              <option key={idx} value={name}>
+            <option value="" disabled>
+              Pilih provinsi
+            </option>
+            {provinsi.map((name) => (
+              <option key={name} value={name}>
                 {name}
               </option>
             ))}
@@ -240,7 +244,14 @@ export default function Form({ data, onSave, isLoading }) {
       </div>
 
       <button type="submit" className="btn btn-primary" disabled={isLoading}>
-        Simpan
+        {isLoading ? (
+          <>
+            <span className="loading loading-spinner loading-sm"></span>
+            Menyimpan...
+          </>
+        ) : (
+          "Simpan"
+        )}
       </button>
     </form>
   );

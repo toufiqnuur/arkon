@@ -1,16 +1,17 @@
 "use client";
 
-import { Menu } from "@headlessui/react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import { createClient } from "~/lib/supabase/client";
 import clsx from "clsx";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   RiUserAddLine,
   RiUserSharedLine,
   RiUserUnfollowLine,
 } from "react-icons/ri";
-import { useUser } from "~/store";
+import { useUser } from "~/store/UserProvider";
+import { toast } from "~/store/toast";
 
 const BtnLink = ({ className, href, children }) => {
   return (
@@ -21,13 +22,16 @@ const BtnLink = ({ className, href, children }) => {
 };
 
 export default function HeaderMenu() {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const { user, setUser } = useUser();
   const path = usePathname();
+  const router = useRouter();
 
-  const logout = async() => {
+  const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    toast.success("Anda telah keluar.");
+    router.replace("/");
   };
 
   if (!user && path === "/") {
@@ -45,8 +49,8 @@ export default function HeaderMenu() {
 
   return (
     <Menu>
-      <Menu.Button className="avatar relative ml-4 mr-2">
-        <div className="h-8 w-8 rounded-full bg-white ring ring-offset-2 ring-offset-base-100">
+      <MenuButton className="avatar relative mr-2 ml-4">
+        <div className="ring-offset-base-100 h-8 w-8 rounded-full bg-white ring ring-offset-2">
           {user ? (
             <span className="text-xl">{user.user_metadata.name[0]}</span>
           ) : (
@@ -56,11 +60,11 @@ export default function HeaderMenu() {
             />
           )}
         </div>
-      </Menu.Button>
-      <Menu.Items className="min-w-48 menu absolute right-4 top-16 rounded-lg bg-white shadow-lg">
+      </MenuButton>
+      <MenuItems className="menu absolute top-16 right-4 min-w-48 rounded-lg bg-white shadow-lg">
         {user ? (
           <>
-            <Menu.Item
+            <MenuItem
               as="li"
               className="menu-title w-full px-2 text-left text-zinc-500"
             >
@@ -71,38 +75,38 @@ export default function HeaderMenu() {
                   {user.email}
                 </span>
               </div>
-            </Menu.Item>
-            <Menu.Item as="li" className="mt-2 w-full text-left">
+            </MenuItem>
+            <MenuItem as="li" className="mt-2 w-full text-left">
               <BtnLink className="btn-primary btn-sm" href="/dashboard">
                 Dashboard
               </BtnLink>
-            </Menu.Item>
-            <Menu.Item as="li" className="mt-2 w-full text-left">
+            </MenuItem>
+            <MenuItem as="li" className="mt-2 w-full text-left">
               <button
                 className="btn btn-error btn-sm normal-case"
                 onClick={logout}
               >
                 Keluar
               </button>
-            </Menu.Item>
+            </MenuItem>
           </>
         ) : (
           <>
-            <Menu.Item as="li" className="w-full text-left">
+            <MenuItem as="li" className="w-full text-left">
               <Link href="/auth/signin">
                 <RiUserAddLine className="text-primary" />
                 Daftar
               </Link>
-            </Menu.Item>
-            <Menu.Item as="li" className="w-full text-left">
+            </MenuItem>
+            <MenuItem as="li" className="w-full text-left">
               <Link href="/auth/signup">
                 <RiUserSharedLine className="text-primary" />
                 Masuk
               </Link>
-            </Menu.Item>
+            </MenuItem>
           </>
         )}
-      </Menu.Items>
+      </MenuItems>
     </Menu>
   );
 }
