@@ -1,8 +1,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
-import { useUser } from "~/store";
-import { UserInit } from "~/store/StoreInit";
 import { createClient } from "~/lib/supabase/server";
+import { UserProvider } from "~/store/UserProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,7 +17,6 @@ export default async function RootLayout({ children }) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  useUser.setState({ user });
 
   return (
     <html lang="en" data-theme="light">
@@ -26,8 +24,7 @@ export default async function RootLayout({ children }) {
         <meta name="dicoding:email" content="taufik2017yk@gmail.com" />
       </head>
       <body className={inter.className}>
-        <UserInit data={{ user }} />
-        {children}
+        <UserProvider initialUser={user}>{children}</UserProvider>
       </body>
     </html>
   );

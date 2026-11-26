@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import provinsi from "~/constant/provinsi";
-import { useUser } from "~/store";
+import { useUser } from "~/store/UserProvider";
 
 export default function Form({ data, onSave, isLoading }) {
   const [name, setName] = useState("");

@@ -3,7 +3,6 @@ import CardItem from "~/components/CardItem";
 import Footer from "~/components/Footer";
 import Header from "~/components/home/Header";
 import Hero from "~/components/home/Hero";
-import { useDataStore } from "~/store";
 import { DataInit } from "~/store/StoreInit";
 import { createClient } from "~/lib/supabase/server";
 
@@ -16,7 +15,6 @@ export default async function Home() {
     .select()
     .range(0, 10)
     .order("id", { ascending: false });
-  useDataStore.setState({ data });
 
   return (
     <>

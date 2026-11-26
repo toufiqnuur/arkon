@@ -7,7 +7,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import Form from "~/components/dashboard/Form";
 import InputImage from "~/components/dashboard/InputImage";
-import { useUser, useUserPage } from "~/store";
+import { useUser } from "~/store/UserProvider";
+import { useUserPage } from "~/store";
 
 export default function Dashboard() {
   const supabase = createClient();

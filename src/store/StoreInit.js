@@ -1,22 +1,12 @@
 "use client";
 
-import { useRef } from "react";
-import { useUser, useDataStore } from ".";
-
-export function UserInit({ data }) {
-  const initialize = useRef(false);
-  if (!initialize.current) {
-    useUser.setState({ user: data.user });
-    initialize.current = true;
-  }
-  return null;
-}
+import { useEffect } from "react";
+import { useDataStore } from ".";
 
 export function DataInit({ data }) {
-  const initialize = useRef(false);
-  if (!initialize.current) {
+  useEffect(() => {
     useDataStore.setState({ data });
-    initialize.current = true;
-  }
+  }, [data]);
+
   return null;
 }

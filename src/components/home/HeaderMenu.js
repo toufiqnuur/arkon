@@ -10,7 +10,7 @@ import {
   RiUserSharedLine,
   RiUserUnfollowLine,
 } from "react-icons/ri";
-import { useUser } from "~/store";
+import { useUser } from "~/store/UserProvider";
 
 const BtnLink = ({ className, href, children }) => {
   return (

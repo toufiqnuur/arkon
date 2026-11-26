@@ -9,7 +9,8 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { useDataStore, useUser } from "~/store";
+import { useDataStore } from "~/store";
+import { useUser } from "~/store/UserProvider";
 import { createClient } from "~/lib/supabase/client";
 import clsx from "clsx";
 import dayjs from "dayjs";
@@ -33,7 +34,7 @@ export default function DetailPage() {
   const [isPostComment, setIsPostComment] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
-  const { updateData } = useDataStore();
+  const updateData = useDataStore((state) => state.updateData);
   const { user } = useUser();
 
   useEffect(() => {

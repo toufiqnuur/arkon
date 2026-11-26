@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Logo from "~/components/Logo";
-import { useUser } from "~/store";
+import { useUser } from "~/store/UserProvider";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
