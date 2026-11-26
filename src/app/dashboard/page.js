@@ -13,26 +13,32 @@ import { useUserPage } from "~/store";
 export default function Dashboard() {
   const supabase = createClient();
   const { user } = useUser();
-  const { data, setData, updateData } = useUserPage();
+  const { data, setData } = useUserPage();
   const [currentData, setCurrentData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedLogo, setSelectedLogo] = useState(null);
   const [selectedImages, setSelectedImages] = useState(null);
 
   useEffect(() => {
+    if (!user) return;
+
     (async () => {
-      const { data } = await supabase
+      const { data: pages, error } = await supabase
         .from("pages")
         .select()
         .eq("user_id", user.id);
-      if (data) {
-        setData(data);
-        setCurrentData(0);
-      }
+
+      if (error) return;
+
+      setData(pages);
+      setCurrentData(pages.length ? 0 : null);
     })();
-  }, []);
+  }, [user]);
 
   const handleUpdate = async (model) => {
+    const current = data?.[currentData];
+    if (!current) return;
+
     setLoading(true);
     const payload = model;
     if (selectedLogo) {
@@ -66,13 +72,14 @@ export default function Dashboard() {
     const { data: res } = await supabase
       .from("pages")
       .update(payload)
-      .eq("id", data[currentData].id)
+      .eq("id", current.id)
       .select()
       .single();
-    let index = data.findIndex((item) => item.id == data[currentData].id);
-    let newData = data;
-    data[index] = res;
-    setData(newData);
+    if (res) {
+      setData(data.map((item) => (item.id === res.id ? res : item)));
+    }
+    setSelectedLogo(null);
+    setSelectedImages(null);
     setLoading(false);
   };
 
@@ -94,18 +101,19 @@ export default function Dashboard() {
           <select
             className={clsx(
               "select select-bordered font-semibold",
-              currentData && "text-primary",
+              currentData !== null && "text-primary",
             )}
-            value={currentData}
-            onChange={(e) => setCurrentData(e.target.value)}
+            value={currentData ?? ""}
+            onChange={(e) => setCurrentData(Number(e.target.value))}
           >
-            <option disabled>Pilih halaman</option>
-            {data &&
-              data.map((data, idx) => (
-                <option key={data.id} value={idx}>
-                  {data.name}
-                </option>
-              ))}
+            <option value="" disabled>
+              Pilih halaman
+            </option>
+            {data?.map((page, idx) => (
+              <option key={page.id} value={idx}>
+                {page.name}
+              </option>
+            ))}
           </select>
         </div>
         <Link href="/dashboard/new" className="btn btn-primary">
@@ -113,7 +121,7 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {data ? (
+      {data?.length ? (
         <div className="flex flex-col-reverse gap-4 md:flex-row">
           <Form
             data={data[currentData]}
@@ -128,7 +136,7 @@ export default function Dashboard() {
           />
         </div>
       ) : (
-        <div className="hidden py-16 text-center">
+        <div className="py-16 text-center">
           <Image
             src="/empty.jpeg"
             width={250}
