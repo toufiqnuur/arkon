@@ -55,7 +55,11 @@ export async function proxy(request) {
     );
   }
 
-  if (request.nextUrl.pathname.startsWith("/auth") && user) {
+  const pathname = request.nextUrl.pathname;
+  const isRecoveryRoute =
+    pathname === "/auth/callback" || pathname === "/auth/reset-password";
+
+  if (pathname.startsWith("/auth") && user && !isRecoveryRoute) {
     return copyResponseState(
       response,
       NextResponse.redirect(new URL("/", request.url)),

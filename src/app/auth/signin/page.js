@@ -34,12 +34,12 @@ export default function SignIn() {
   return (
     <div className="mx-auto max-w-lg px-4">
       <form
-        className="mt-10 border px-4 pb-8 pt-6 shadow-lg"
+        className="mt-10 rounded-lg px-4 pt-6 pb-8 shadow-lg"
         onSubmit={handleSignIn}
       >
         <div className="text-center">
           <Link href="/" className="btn btn-ghost">
-            <Logo type="full" className="mx-auto text-primary" />
+            <Logo type="full" className="text-primary mx-auto" />
           </Link>
         </div>
 
@@ -69,6 +69,15 @@ export default function SignIn() {
           />
         </div>
 
+        <div className="mt-2 text-right">
+          <Link
+            href="/auth/forget-password"
+            className="link link-hover text-primary text-sm"
+          >
+            Lupa kata sandi?
+          </Link>
+        </div>
+
         <button
           type="submit"
           className="btn btn-primary mt-6 w-full"
@@ -79,7 +88,7 @@ export default function SignIn() {
 
         <div className="mt-6">
           Belum punya akun?{" "}
-          <Link href="/auth/signup" className="font-semibold text-primary">
+          <Link href="/auth/signup" className="text-primary font-semibold">
             Daftar
           </Link>
         </div>
